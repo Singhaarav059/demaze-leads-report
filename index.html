@@ -300,45 +300,98 @@ footer strong{color:var(--blue)}
 <section id="problem">
 <div class="w"><div class="sec">
   <div class="rv">
-    <div class="eye">01 — The problem</div>
-    <h2>Finding real leads is genuinely hard</h2>
-    <p class="sub">Most lead generation tools search for keywords. Keywords attract the wrong people. This is the story of figuring out a better way.</p>
+    <div class="eye">01 — The real problem</div>
+    <h2>Finding genuine leads is harder than it looks</h2>
+    <p class="sub">Every platform we wanted to use had its own set of restrictions. Before getting to leads at all, we first had to figure out how to even collect data reliably from each one.</p>
   </div>
 
-  <div class="ag2 rv">
-    <div class="ac bad">
-      <div class="albl bad">What we tried first</div>
-      <div class="at2">Keyword search across platforms</div>
-      <div class="ab2">Starting in n8n, we searched LinkedIn and other platforms with terms like "looking for developer", "need software built", "hire app team". Logical starting point.</div>
-      <ul class="alist bad">
-        <li>Results were overwhelmingly agencies promoting services</li>
-        <li>Developers writing about their own projects ranked highly</li>
-        <li>Job listings mixed in constantly</li>
-        <li>Actual buyers rarely write the words you search for</li>
-        <li>AI had to score hundreds of irrelevant posts every run</li>
-      </ul>
-    </div>
-    <div class="ac good">
-      <div class="albl good">The insight that changed everything</div>
-      <div class="at2">Feed-based discovery (from OpenOutreach)</div>
-      <div class="ab2">Studying the open-source OpenOutreach project revealed a fundamentally different approach: scroll through the LinkedIn feed, not search results.</div>
-      <ul class="alist good">
-        <li>Feed posts come from actual founders and business owners</li>
-        <li>People describe real problems they are stuck on right now</li>
-        <li>Context is visible — who they are, what they run, what stage they're at</li>
-        <li>These posts never contain "hire developer" — they contain business problems</li>
-        <li>Lead quality on the very first test run improved dramatically</li>
-      </ul>
+  <!-- platform restrictions -->
+  <div class="rv" style="margin-bottom:52px;">
+    <div style="font-family:var(--head);font-weight:600;font-size:17px;margin-bottom:22px;letter-spacing:-.3px;">Platform restrictions we ran into</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">
+
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:22px;border-top:2px solid rgba(232,160,32,.5);">
+        <div style="font-family:var(--head);font-weight:600;font-size:14px;margin-bottom:10px;display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">💬</span> Reddit</div>
+        <p style="font-size:13px;color:var(--sub);line-height:1.78;">Reddit has a strict API policy that changed in 2023. They started charging for API access and put hard rate limits on how many requests any app can make per minute. The free tier only allows 100 requests per minute and beyond a certain volume, Reddit starts returning empty results or throwing errors entirely. On top of that, Reddit's search algorithm deprioritises older posts heavily, so searching by keyword mostly surfaces recent popular posts rather than actual discussions where real people describe their problems. Scraping without the official API gets IP-banned quickly.</p>
+      </div>
+
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:22px;border-top:2px solid rgba(79,142,247,.5);">
+        <div style="font-family:var(--head);font-weight:600;font-size:14px;margin-bottom:10px;display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">𝕏</span> Twitter / X</div>
+        <p style="font-size:13px;color:var(--sub);line-height:1.78;">After Elon Musk's acquisition in 2022, Twitter's free API was shut down completely. The basic tier now costs $100 per month and only allows reading 10,000 tweets per month, which is nowhere near enough for daily lead discovery. The free endpoints that still exist are severely rate-limited and return incomplete data. Scraping tweets without the API gets blocked via JavaScript rendering challenges that require a real browser session, and even then, IP bans come in fast if requests look automated.</p>
+      </div>
+
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:22px;border-top:2px solid rgba(124,92,252,.5);">
+        <div style="font-family:var(--head);font-weight:600;font-size:14px;margin-bottom:10px;display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">💼</span> LinkedIn (hardest)</div>
+        <p style="font-size:13px;color:var(--sub);line-height:1.78;">LinkedIn has by far the most aggressive anti-scraping system. Their official API gives almost no useful data unless you have a partner-level agreement. Any non-residential IP (cloud servers, VMs, datacenters) gets instantly blocked. They use browser fingerprinting, CAPTCHA, and behaviour analysis to detect automation. Session cookies expire and get invalidated the moment something looks non-human. Even running Playwright (a real browser) on a cloud server gets caught because the IP itself is flagged. The only way to get reliable data from LinkedIn is a real browser session running from a home or office internet connection.</p>
+      </div>
+
     </div>
   </div>
 
-  <div class="rv" style="background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:28px;margin-bottom:16px;">
-    <div style="font-family:var(--head);font-weight:600;font-size:15px;margin-bottom:16px;">The core insight</div>
-    <p style="font-size:14px;color:var(--sub);line-height:1.85;max-width:700px;">
-      Real clients don't write "I'm looking for a developer." They write "our inventory system is a spreadsheet and
-      we have 12 staff now and it's breaking down" or "we need to digitise this entire workflow before Q3."
-      Keyword search will never find these people. Feed browsing surfaces them naturally — the same way a human
-      would spot an opportunity while scrolling. We built a system to do that at scale.
+  <!-- n8n keyword approach -->
+  <div class="rv" style="margin-bottom:52px;">
+    <div style="font-family:var(--head);font-weight:600;font-size:17px;margin-bottom:18px;letter-spacing:-.3px;">What we built first and why it did not work</div>
+    <div style="background:var(--s1);border:1px solid var(--bd);border-left:3px solid var(--red);border-radius:var(--r);padding:24px;margin-bottom:14px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;font-weight:600;">The n8n approach</div>
+      <p style="font-size:13.5px;color:var(--sub);line-height:1.82;margin-bottom:14px;">
+        The first version used n8n, a no-code automation tool, connected to a set of third-party scrapers and data APIs. We used Hunter.io to find email addresses, ScrapingDog to pull page content from sites that blocked direct requests, and SerpAPI to run Google search queries and get structured results back. The idea was to search across platforms for people who needed software development help.
+      </p>
+      <p style="font-size:13.5px;color:var(--sub);line-height:1.82;margin-bottom:14px;">
+        The search queries looked like this: "need a software developer", "looking for app developer", "hire automation developer", "need someone to build". Run these across LinkedIn, Reddit, Twitter, and various forums and you would expect to find real clients.
+      </p>
+      <p style="font-size:13.5px;color:var(--sub);line-height:1.82;margin-bottom:6px;">
+        What actually came back was mostly agencies. Development shops, freelancer platforms, outsourcing companies and hiring firms have flooded the internet with exactly these keywords because those are the terms their clients search for. So every search we ran returned pages of agencies advertising their own services, developers promoting their portfolios, and job listings. We ran multiple pipeline runs and could not find a single genuine lead through this approach.
+      </p>
+    </div>
+    <div style="background:rgba(0,201,122,.05);border:1px solid rgba(0,201,122,.15);border-radius:8px;padding:16px 20px;">
+      <p style="font-size:13.5px;color:#5bbf90;line-height:1.8;">
+        The problem was fundamental. Real clients do not write "I need a software developer". They write "our inventory is managed in three separate spreadsheets and we have 40 staff now and it's becoming unmanageable" or "we're processing 200 client requests a month manually and losing track of half of them". They describe a business situation. No keyword search would ever surface those posts.
+      </p>
+    </div>
+  </div>
+
+  <!-- OpenOutreach insight -->
+  <div class="rv" style="margin-bottom:52px;">
+    <div style="font-family:var(--head);font-weight:600;font-size:17px;margin-bottom:18px;letter-spacing:-.3px;">The approach that actually worked</div>
+    <div class="ag2">
+      <div class="ac bad">
+        <div class="albl bad">Keyword search (what we did first)</div>
+        <div class="at2">Searching for "hire developer" type phrases</div>
+        <div class="ab2">Every major platform's search index gets gamed by agencies. The people who write "hire developer" in their posts are the ones selling development services, not buying them.</div>
+        <ul class="alist bad">
+          <li>Results almost entirely agencies and freelancer platforms</li>
+          <li>Developers marketing themselves showed up constantly</li>
+          <li>Job listings filled every results page</li>
+          <li>Real buyers never phrase their problem as a search keyword</li>
+          <li>Zero genuine client leads found across multiple runs</li>
+        </ul>
+      </div>
+      <div class="ac good">
+        <div class="albl good">Feed browsing (OpenOutreach method)</div>
+        <div class="at2">Scrolling through feeds like a human would</div>
+        <div class="ab2">Discovered OpenOutreach, an open-source project that takes a completely different approach. Instead of searching, it browses feeds the same way a person would, collecting posts as they appear.</div>
+        <ul class="alist good">
+          <li>Feed posts come from actual founders and business owners</li>
+          <li>People describe real problems they are currently dealing with</li>
+          <li>Full context is visible including who they are and what they run</li>
+          <li>No keyword gaming possible since there is no keyword being searched</li>
+          <li>Lead quality improved dramatically on the very first test run</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- LLM role -->
+  <div class="rv" style="background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:28px;">
+    <div style="font-family:var(--head);font-weight:600;font-size:15px;margin-bottom:14px;">Where the AI comes in, and why it is not 100% reliable</div>
+    <p style="font-size:13.5px;color:var(--sub);line-height:1.83;margin-bottom:14px;">
+      Feed browsing collects a lot more relevant posts than keyword search, but it still collects everything. Developers talking about their own work, founders who happen to be technical, success stories, industry news. All of it ends up in the collected data. That is where the LLM scoring step matters. Every collected post gets fed to the AI model, which reads it and scores it from 1 to 10 based on whether this looks like a genuine software development opportunity.
+    </p>
+    <p style="font-size:13.5px;color:var(--sub);line-height:1.83;margin-bottom:14px;">
+      Is it 100% reliable? No. The AI makes mistakes, particularly on edge cases. A technical founder who writes about scaling infrastructure challenges might get scored as a developer when they are actually a potential client. A post describing a business problem without explicitly mentioning software might get scored lower than it deserves. The model is good on clear-cut cases but ambiguous posts still slip through or get incorrectly rejected.
+    </p>
+    <p style="font-size:13.5px;color:var(--sub);line-height:1.83;">
+      The way to fix this over time is training. Every time someone accepts or rejects a lead in the dashboard review panel, that decision gets saved. The system uses those decisions to build a model that understands what kinds of posts are actually relevant for Demaze specifically, not just in general. The more decisions get recorded, the smarter the pre-filtering becomes, and the fewer mistakes the pipeline makes on the ambiguous cases. It improves continuously the more it gets used.
     </p>
   </div>
 </div></div>
@@ -352,7 +405,7 @@ footer strong{color:var(--blue)}
   <div class="rv">
     <div class="eye">02 — The journey</div>
     <h2>From n8n to a production Python system</h2>
-    <p class="sub">Each iteration revealed a new constraint. Here is what changed, why, and what the outcome was.</p>
+    <p class="sub">Every version of this system taught us something the previous one could not. Here is the full progression from start to where it is today.</p>
   </div>
 
   <div class="jo">
@@ -360,54 +413,54 @@ footer strong{color:var(--blue)}
     <div class="jst">
       <div class="jdot"><div class="jdi"></div></div>
       <div class="jb">
-        <div class="jhead"><span class="jlbl jprob">v1 · n8n</span><span class="jtitle">Started with n8n — worked, but hit a ceiling fast</span></div>
-        <p class="jbody">n8n was the right starting point for quick automation without infrastructure. We connected LinkedIn search, basic scoring, and Supabase storage. But as soon as we needed custom scoring logic, ML models, or proper concurrency, n8n's node-based model became a constraint. Every edge case needed a workaround. There was no way to add a feedback loop or train anything from historical decisions.</p>
-        <div class="jresult"><strong>Decision</strong>Rebuilt from scratch in Python with FastAPI. Full control over scoring logic, async execution, and the ability to add ML components properly.</div>
+        <div class="jhead"><span class="jlbl jprob">v1 · n8n</span><span class="jtitle">Started with n8n, which worked until it did not</span></div>
+        <p class="jbody">n8n was a sensible starting point. It lets you build automation visually without writing backend code, and it connected to LinkedIn search, basic scoring via webhooks, and Supabase for storage. Good enough to get something running fast. The problem appeared as soon as we needed anything more sophisticated. Custom scoring logic, ML models, concurrency control, feedback loops from human review decisions. n8n is not built for any of that. Every edge case required a workaround that created three new problems.</p>
+        <div class="jresult"><strong>What changed</strong>Rebuilt from scratch in Python using FastAPI. Full control over every part of the system, proper async execution, and the ability to plug in ML components like the GP scorer without fighting against the framework.</div>
       </div>
     </div>
 
     <div class="jst">
       <div class="jdot"><div class="jdi"></div></div>
       <div class="jb">
-        <div class="jhead"><span class="jlbl jprob">v1–v2</span><span class="jtitle">Keyword search kept returning agencies, not clients</span></div>
-        <p class="jbody">Both in n8n and early Python, searching LinkedIn with "hire developer" or "need software built" returned results dominated by agencies self-promoting, developers posting about their own work, and job listings. After scoring hundreds of irrelevant posts, the pattern was clear: real buyers don't phrase their need as a search query. They describe a situation.</p>
-        <div class="jresult"><strong>Turning point</strong>Found OpenOutreach, an open-source project that scrolls the LinkedIn feed instead of searching. Adapted that approach using Playwright browser automation. First run returned noticeably different — and better — leads.</div>
+        <div class="jhead"><span class="jlbl jprob">v1 and v2</span><span class="jtitle">Keyword search returned agencies instead of clients, every single time</span></div>
+        <p class="jbody">Both in n8n and in the early Python version, we searched LinkedIn with phrases like "hire developer" or "need software built". The results were dominated by agencies self-promoting, developers posting about their own work, and job listings. We ran multiple complete pipeline runs. Not a single genuine client lead came through. After digging into why, the pattern became clear. Real buyers describe a business situation. They never phrase it as a search keyword because they are not trying to be found.</p>
+        <div class="jresult"><strong>What changed</strong>Found OpenOutreach, an open-source project that scrolls the LinkedIn feed the way a person would browse it instead of searching with keywords. Adapted that approach using Playwright browser automation. The very first test run surfaced noticeably better posts.</div>
       </div>
     </div>
 
     <div class="jst">
       <div class="jdot"><div class="jdi"></div></div>
       <div class="jb">
-        <div class="jhead"><span class="jlbl jprob">v2 · scoring</span><span class="jtitle">Scoring 60 leads was taking 5+ minutes and stalling on rate limits</span></div>
-        <p class="jbody">The original scorer sent one post per API call, with a 2.1s sleep between calls to avoid rate limits on Groq's free tier. 60 leads meant 60 calls and 126 seconds of pure sleep time. Even with concurrency added, hitting Groq's 30 RPM limit caused retry loops that stalled the whole pipeline. Switching to NVIDIA still hit limits when running 6 concurrent calls.</p>
-        <div class="jresult"><strong>Fix</strong>Batch scoring: send 5 leads in one prompt, get back a JSON array of 5 scores. 60 leads → 12 API calls. Semaphore(3) for controlled concurrency. asyncio.gather() to run batches in parallel. Total scoring time: ~45 seconds. NVIDIA Nemotron-49B as primary, Groq Llama-70B as automatic fallback.</div>
+        <div class="jhead"><span class="jlbl jprob">v2 · scoring speed</span><span class="jtitle">Scoring 60 posts was taking over 5 minutes and kept stalling</span></div>
+        <p class="jbody">The original scorer sent one post at a time to the Groq API, with a 2.1 second forced sleep after every call to stay under the rate limit. 60 posts meant 60 calls and 126 seconds of pure waiting before any results came back. Even after adding concurrency, hitting Groq's 30 requests per minute limit caused retry loops that stalled the pipeline for minutes. Switching to NVIDIA helped but 6 concurrent calls still exceeded their free tier limit.</p>
+        <div class="jresult"><strong>What changed</strong>Batch scoring. Five posts go into one API call and five scores come back in a single JSON array. 60 posts became 12 API calls instead of 60. Combined with asyncio.gather() running multiple batches concurrently and a Semaphore(3) to stay within rate limits, total scoring time dropped to around 45 seconds. NVIDIA Nemotron-49B became the primary model with Groq as automatic fallback when it rate-limits.</div>
       </div>
     </div>
 
     <div class="jst">
       <div class="jdot"><div class="jdi"></div></div>
       <div class="jb">
-        <div class="jhead"><span class="jlbl jprob">v2 · UX</span><span class="jtitle">LinkedIn ran silently for 5 minutes — impossible to tell if it was working</span></div>
-        <p class="jbody">The LinkedIn scraper runs as a subprocess (Playwright browser). The original implementation used subprocess.run(), which buffers all output and only delivers it after the process exits. A 3–5 minute browser run meant the dashboard log panel showed nothing for minutes. Users assumed the pipeline had crashed.</p>
-        <div class="jresult"><strong>Fix</strong>Replaced subprocess.run() with subprocess.Popen() + line-by-line reading. Each output line is forwarded to the async event loop immediately via loop.call_soon_threadsafe(). Now every scroll action and collected post appears in the dashboard log in real time as it happens.</div>
+        <div class="jhead"><span class="jlbl jprob">v2 · visibility</span><span class="jtitle">LinkedIn ran silently for 5 minutes with nothing showing on screen</span></div>
+        <p class="jbody">The LinkedIn scraper runs as a separate browser subprocess because Playwright needs to control an actual browser. The original code used subprocess.run() which holds all output until the process finishes. During the 3 to 5 minute LinkedIn browser run, the dashboard showed nothing at all. Anyone watching assumed the pipeline had crashed or frozen. There was no way to tell it was actually working.</p>
+        <div class="jresult"><strong>What changed</strong>Replaced subprocess.run() with subprocess.Popen() and switched to reading output line by line as it arrives. Each line gets forwarded immediately to the async event loop using loop.call_soon_threadsafe(). Every scroll action, every post collected, now appears in the dashboard log in real time as it happens.</div>
       </div>
     </div>
 
     <div class="jst">
       <div class="jdot"><div class="jdi"></div></div>
       <div class="jb">
-        <div class="jhead"><span class="jlbl jprob">v2 · deploy</span><span class="jtitle">LinkedIn on cloud simply does not work — blocked by design</span></div>
-        <p class="jbody">After deploying to Railway, LinkedIn failed completely. Two separate issues: session files were gitignored so Railway had nothing to authenticate with, and LinkedIn's anti-bot system actively blocks datacenter IP ranges from AWS, Railway, and Render. Even with session files present, the IP would get flagged immediately.</p>
-        <div class="jresult"><strong>Architecture decision</strong>LinkedIn must run on a residential IP (home/office connection). Current setup: Cloudflare Tunnel runs on a local PC and exposes a permanent public HTTPS URL. LinkedIn sees a normal residential IP. Reddit and Twitter run on Railway without issue since they don't have this restriction.</div>
+        <div class="jhead"><span class="jlbl jfix2">current limitation</span><span class="jtitle">LinkedIn requires a personal machine and cannot run on cloud servers</span></div>
+        <p class="jbody">When the system was deployed to Railway, LinkedIn stopped working entirely. LinkedIn's infrastructure blocks all cloud datacenter IP ranges at the network level. AWS, Railway, Render, Google Cloud, all of them are in LinkedIn's block list. It is not a policy issue that can be worked around. Even if you get past that, the session cookies used for authentication get invalidated the moment any request comes from a datacenter IP.</p>
+        <div class="jresult"><strong>Current setup</strong>LinkedIn runs on a local PC using a home internet connection, which uses a residential IP that LinkedIn treats as normal. Cloudflare Tunnel runs alongside it and exposes the server with a permanent public HTTPS URL so the dashboard works from anywhere. Reddit and Twitter run on Railway without any issues since they do not have this restriction.</div>
       </div>
     </div>
 
     <div class="jst">
       <div class="jdot"><div class="jdi"></div></div>
       <div class="jb">
-        <div class="jhead"><span class="jlbl jfix2">ongoing</span><span class="jtitle">Edge cases in AI scoring — technical founders, indirect signals</span></div>
-        <p class="jbody">Feed-based scraping dramatically improved signal quality but the scoring model still has edge cases. A technical founder describing a scaling challenge can look like a developer to the AI. Posts that describe a business problem without explicitly asking for software development are genuinely ambiguous. These require human judgement.</p>
-        <div class="jresult"><strong>Long-term fix</strong>The GP (Gaussian Process) scorer learns from every accept/reject click in the dashboard. Once 10 labelled examples are accumulated, it activates and starts pre-filtering posts before they reach the LLM — reducing cost and improving accuracy on exactly the edge cases the LLM struggles with. This gets smarter the more it's used.</div>
+        <div class="jhead"><span class="jlbl jfix2">ongoing</span><span class="jtitle">AI scoring is good but not perfect, especially on ambiguous posts</span></div>
+        <p class="jbody">Feed browsing is a significant improvement over keyword search but the AI model still makes mistakes. A technical founder writing about scaling challenges can look like a developer to the model. Posts that describe a clear business problem without explicitly mentioning software get scored inconsistently. These edge cases require human review and the model cannot get better on its own without that input.</p>
+        <div class="jresult"><strong>How it improves over time</strong>Every accept or reject decision made through the dashboard review panel gets saved. The GP scorer uses these decisions to learn what kinds of posts are actually relevant for this specific use case. Once 10 decisions have been recorded it activates and starts pre-filtering posts before they reach the LLM at all. The more it gets used, the fewer mistakes it makes on exactly the posts where the LLM currently struggles.</div>
       </div>
     </div>
 
@@ -423,7 +476,7 @@ footer strong{color:var(--blue)}
   <div class="rv">
     <div class="eye">03 — Under the hood</div>
     <h2>How the system actually works</h2>
-    <p class="sub">The full architecture — from scraping to saving — and the specific technical decisions behind each part.</p>
+    <p class="sub">Every stage of the pipeline, the architecture decisions behind each one, and the specific technical choices that made it fast and reliable.</p>
   </div>
 
   <!-- pipeline flow -->
@@ -438,6 +491,28 @@ footer strong{color:var(--blue)}
     <div class="pstep"><div class="pnode">✅</div><div class="pnm">Qualify</div><div class="pns">score ≥ 7</div></div>
     <div class="pstep"><div class="pnode">💾</div><div class="pnm">Save</div><div class="pns">Supabase async</div></div>
   </div>
+  </div>
+
+  <!-- pipeline stage explanations -->
+  <div class="rv" style="margin-bottom:40px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:20px;">
+        <div style="font-family:var(--head);font-weight:600;font-size:13px;margin-bottom:8px;color:var(--blue);">Stage 1 and 2: Scrape and deduplicate</div>
+        <p style="font-size:13px;color:var(--sub);line-height:1.78;">Reddit and Twitter scrape in parallel using SerpAPI, which handles their rate limits and returns structured results. LinkedIn scrolls through the feed using a real Playwright browser session. All three run and return posts, which then get merged and deduplicated using the post ID so the same post never gets scored twice across runs.</p>
+      </div>
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:20px;">
+        <div style="font-family:var(--head);font-weight:600;font-size:13px;margin-bottom:8px;color:var(--red);">Stage 3: Hard reject</div>
+        <p style="font-size:13px;color:var(--sub);line-height:1.78;">Before any post reaches the AI model, a set of regex patterns filters out the obvious junk. Posts from known agency account patterns, posts containing "we are hiring", posts that are clearly news articles or tutorials. This stage typically removes 30 to 40 percent of collected posts without spending a single API call, which directly reduces scoring cost and time.</p>
+      </div>
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:20px;">
+        <div style="font-family:var(--head);font-weight:600;font-size:13px;margin-bottom:8px;color:var(--vio);">Stage 4: GP pre-rank (once active)</div>
+        <p style="font-size:13px;color:var(--sub);line-height:1.78;">The Gaussian Process scorer converts each post into a 384-dimensional embedding using FastEmbed. It then uses a trained model to predict the probability that this post is a genuine lead. Posts scoring below 0.2 probability get skipped entirely without reaching the LLM. This stage is inactive until 10 human review decisions have been recorded in the dashboard. Once it activates it handles the cases the regex misses.</p>
+      </div>
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:20px;">
+        <div style="font-family:var(--head);font-weight:600;font-size:13px;margin-bottom:8px;color:var(--grn);">Stage 5, 6 and 7: Score, qualify and save</div>
+        <p style="font-size:13px;color:var(--sub);line-height:1.78;">Remaining posts go to the AI model in batches of 5. The model scores each one from 1 to 10. Posts scoring 7 or above get saved to Supabase as qualified leads. The save calls all run concurrently using asyncio.gather so saving 6 leads takes the same time as saving 1. Hunter.io runs in parallel to look up contact emails for leads where a company domain can be identified.</p>
+      </div>
+    </div>
   </div>
 
   <!-- system diagram -->
@@ -636,14 +711,14 @@ results = <span class="ck">await</span> asyncio.<span class="cf">gather</span>(*
       <div class="lscore s10">10</div>
       <div class="lname">Md Sarwar Alam</div>
       <div class="lrole">Founder · F.K Agro Solutions</div>
-      <div class="lquote">"Looking for a web and app development partner to build a full digital ecosystem — website, admin panel, Android app, inventory and CRM integration."</div>
+      <div class="lquote">"Looking for a web and app development partner to build a full digital ecosystem including website, admin panel, Android app, inventory and CRM integration."</div>
       <span class="lplat pli">LinkedIn</span>
     </div>
     <div class="lcard">
       <div class="lscore s10">10</div>
       <div class="lname">Business Owner</div>
       <div class="lrole">r/BusinessIntelligence</div>
-      <div class="lquote">"Sales team expanding faster than our infrastructure can handle. Need end-to-end workflow automation from lead scoring to hand-offs. Can't hire a dev team for a 6-month build."</div>
+      <div class="lquote">"Sales team expanding faster than our infrastructure can handle. Need end-to-end workflow automation from lead scoring to hand-offs. Can't hire a dev team for a 6-month build right now."</div>
       <span class="lplat prd">Reddit</span>
     </div>
     <div class="lcard">
@@ -657,14 +732,14 @@ results = <span class="ck">await</span> asyncio.<span class="cf">gather</span>(*
       <div class="lscore s8">8</div>
       <div class="lname">App Idea Seeker</div>
       <div class="lrole">r/AppBuilding</div>
-      <div class="lquote">"I have an app idea but no skill to build it. Looking for a real team — builder, UX designer, security. Willing to take a chance on the concept."</div>
+      <div class="lquote">"I have an app idea but no skill to build it. Looking for a real team with a builder, UX designer, and security experience. Willing to take a chance on the concept."</div>
       <span class="lplat prd">Reddit</span>
     </div>
     <div class="lcard">
       <div class="lscore s8">8</div>
       <div class="lname">Dr Sriinidhi BV</div>
       <div class="lrole">Founder · Aignoz Health</div>
-      <div class="lquote">"Healthcare's problem isn't app shortage — it's systems shortage. Looking for architects who understand clinical workflow interoperability."</div>
+      <div class="lquote">"Healthcare's real problem is not an app shortage, it is a systems shortage. Looking for architects who understand clinical workflow interoperability."</div>
       <span class="lplat pli">LinkedIn</span>
     </div>
   </div>
@@ -685,19 +760,19 @@ results = <span class="ck">await</span> asyncio.<span class="cf">gather</span>(*
   <div class="limgrid rv">
     <div class="lim">
       <div class="limh"><span>🌐</span>LinkedIn requires a residential machine</div>
-      <div class="limb">LinkedIn actively blocks cloud datacenter IPs at the network level. Not a policy issue — it's infrastructure-level blocking. The Cloudflare Tunnel workaround works well but means the system isn't fully autonomous. A local PC needs to be running. The right long-term fix is LinkedIn Sales Navigator API access ($80/month) or the Voyager internal API — both remove the Playwright dependency entirely.</div>
+      <div class="limb">LinkedIn actively blocks cloud datacenter IPs at the network level. It is infrastructure-level blocking, not a policy that can be worked around. The Cloudflare Tunnel setup works well but it means the system is not fully autonomous since a local PC needs to be running. The right long-term fix is LinkedIn Sales Navigator API access at $80 per month, or using the Voyager internal API, both of which remove the Playwright browser dependency entirely.</div>
     </div>
     <div class="lim">
       <div class="limh"><span>🧠</span>GP scorer is waiting for data</div>
-      <div class="limb">The self-learning component needs 10 labelled decisions to activate. Every review in the dashboard contributes. Once active, it pre-filters posts before they hit the LLM — reducing cost and handling the ambiguous edge cases the AI model currently struggles with. This is the most impactful unactivated feature in the system right now.</div>
+      <div class="limb">The self-learning component needs 10 labelled decisions before it switches on. Every accept or reject click in the dashboard review panel contributes toward that count. Once active it pre-filters posts before they reach the LLM, which reduces cost and handles the ambiguous edge cases the AI model currently gets wrong. This is the most impactful unactivated feature in the system right now.</div>
     </div>
     <div class="lim">
-      <div class="limh"><span>📧</span>Email enrichment is partial</div>
-      <div class="limb">Hunter.io email lookup works for roughly 30% of leads — only when the lead's company domain is clearly identifiable. Most LinkedIn posts don't include a company website. The outreach step is built; it just can't complete automatically for the majority of leads yet. Apollo or Clay integrations would improve coverage significantly.</div>
+      <div class="limh"><span>📧</span>Email enrichment only works for some leads</div>
+      <div class="limb">Hunter.io email lookup only works when the lead's company domain can be clearly identified from their post or profile. Most LinkedIn posts do not include a company website link. The outreach pipeline is built and tested. It just cannot complete automatically for the majority of leads yet. Integrating Apollo or Clay would improve email discovery coverage significantly.</div>
     </div>
     <div class="lim">
-      <div class="limh"><span>🎯</span>Still some false positives at the edges</div>
-      <div class="limb">Technical founders who write about scaling problems, posts that describe a clear business gap without explicitly asking for software — these are genuinely hard to classify without broader context. The GP scorer, once trained on real accept/reject data from this specific business context, will handle these far better than a zero-shot LLM.</div>
+      <div class="limh"><span>🎯</span>AI scoring still makes mistakes on edge cases</div>
+      <div class="limb">Technical founders describing scaling problems, posts that clearly describe a business gap without explicitly mentioning software development, these are genuinely hard to classify from text alone. The GP scorer once trained on real accept and reject data from this specific business context will handle these far better than the zero-shot LLM approach currently used for all posts.</div>
     </div>
   </div>
 
@@ -715,7 +790,7 @@ results = <span class="ck">await</span> asyncio.<span class="cf">gather</span>(*
 
   <div class="outro rv">
     <div class="ot">The hard part wasn't the code.</div>
-    <div class="os">It was figuring out that keyword search was the wrong mental model entirely. Everything else followed from that one insight.</div>
+    <div class="os">It was figuring out that keyword search was the wrong mental model entirely. Once that changed, everything else followed from it.</div>
     <div class="pillrow">
       <span class="pill" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);color:var(--blue);">FastAPI · async</span>
       <span class="pill" style="background:rgba(124,92,252,.1);border:1px solid rgba(124,92,252,.2);color:var(--vio);">Nemotron-49B</span>
