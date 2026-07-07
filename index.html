@@ -493,6 +493,70 @@ footer strong{color:var(--blue)}
   </div>
   </div>
 
+  <!-- what actually happens walkthrough -->
+  <div class="rv" style="margin-bottom:48px;">
+    <div style="font-size:12px;color:var(--sub);text-transform:uppercase;letter-spacing:2px;margin-bottom:22px;font-family:var(--mono);">What actually happens when you click Run</div>
+    <div style="display:flex;flex-direction:column;gap:0;">
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:18px 0;border-bottom:1px solid var(--bd);">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--blue);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:6px;padding:4px 10px;white-space:nowrap;margin-top:2px;">step 1</div>
+        <div>
+          <div style="font-family:var(--head);font-weight:600;font-size:13.5px;margin-bottom:5px;">Dashboard sends a request to FastAPI</div>
+          <p style="font-size:13px;color:var(--sub);line-height:1.78;">Your browser hits the <code style="font-family:var(--mono);font-size:11px;color:var(--vio)">/api/pipeline/run</code> endpoint. FastAPI immediately starts a background task and returns a response so the page does not hang. At the same time, the browser opens a persistent SSE connection to <code style="font-family:var(--mono);font-size:11px;color:var(--vio)">/api/stream</code> and starts listening for log messages. Every line you see appear in the dashboard log comes through that live connection.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:18px 0;border-bottom:1px solid var(--bd);">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--blue);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:6px;padding:4px 10px;white-space:nowrap;margin-top:2px;">step 2</div>
+        <div>
+          <div style="font-family:var(--head);font-weight:600;font-size:13.5px;margin-bottom:5px;">Reddit and Twitter scrape at the same time</div>
+          <p style="font-size:13px;color:var(--sub);line-height:1.78;">Both scrapers fire together using <code style="font-family:var(--mono);font-size:11px;color:var(--vio)">asyncio.gather()</code>. Neither one waits for the other. SerpAPI handles the actual search requests and returns structured post data. This usually finishes in under 30 seconds and returns around 40 to 60 posts combined.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:18px 0;border-bottom:1px solid var(--bd);">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--blue);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:6px;padding:4px 10px;white-space:nowrap;margin-top:2px;">step 3</div>
+        <div>
+          <div style="font-family:var(--head);font-weight:600;font-size:13.5px;margin-bottom:5px;">LinkedIn opens a real browser on your PC and starts scrolling</div>
+          <p style="font-size:13px;color:var(--sub);line-height:1.78;">Playwright launches an actual Chrome window on the local machine using your saved LinkedIn session. It scrolls through the feed the way a person would, pausing between scrolls to let posts load. As it collects posts, each action logs a line. That line travels from the browser subprocess through the async event loop and over the SSE connection straight to your dashboard in real time. You can watch it work as it runs.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:18px 0;border-bottom:1px solid var(--bd);">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--blue);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:6px;padding:4px 10px;white-space:nowrap;margin-top:2px;">step 4</div>
+        <div>
+          <div style="font-family:var(--head);font-weight:600;font-size:13.5px;margin-bottom:5px;">All posts get merged, deduplicated, and filtered</div>
+          <p style="font-size:13px;color:var(--sub);line-height:1.78;">Posts from all three sources get combined into one list. Any post that has already been seen in a previous run gets removed using its unique post ID. Then the hard reject filter runs through the list and removes obvious junk. Anything matching agency patterns, job listings, or known promotional formats gets discarded without touching the AI at all. Typically 30 to 40 percent of posts are gone at this point.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:18px 0;border-bottom:1px solid var(--bd);">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--blue);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:6px;padding:4px 10px;white-space:nowrap;margin-top:2px;">step 5</div>
+        <div>
+          <div style="font-family:var(--head);font-weight:600;font-size:13.5px;margin-bottom:5px;">GP scorer pre-filters if it has enough data (optional)</div>
+          <p style="font-size:13px;color:var(--sub);line-height:1.78;">If 10 or more accept/reject decisions have been recorded, the GP scorer runs before the AI. It converts each post's text into numbers, compares those numbers against the posts you have already labelled, and produces a probability score. Posts that come out below 0.2 get dropped. This can save several more API calls on content the system has learned you consistently reject.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:18px 0;border-bottom:1px solid var(--bd);">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--blue);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:6px;padding:4px 10px;white-space:nowrap;margin-top:2px;">step 6</div>
+        <div>
+          <div style="font-family:var(--head);font-weight:600;font-size:13.5px;margin-bottom:5px;">Remaining posts go to the AI in groups of 5</div>
+          <p style="font-size:13px;color:var(--sub);line-height:1.78;">The remaining posts get split into batches of 5. All batches fire at once, up to 3 at a time, and each one asks the AI to score the 5 posts and return a JSON array with a score and a reason for each one. If NVIDIA rate limits the request, Groq takes over automatically for that batch. Each post gets a score from 1 to 10.</p>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px;align-items:flex-start;padding:18px 0;">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--grn);background:rgba(0,201,122,.1);border:1px solid rgba(0,201,122,.2);border-radius:6px;padding:4px 10px;white-space:nowrap;margin-top:2px;">step 7</div>
+        <div>
+          <div style="font-family:var(--head);font-weight:600;font-size:13.5px;margin-bottom:5px;">Qualified leads get saved and emails get looked up</div>
+          <p style="font-size:13px;color:var(--sub);line-height:1.78;">Posts scoring 7 or above get saved to Supabase. All the saves run at the same time so the database writes do not queue up. At the same time, Hunter.io tries to find a contact email for each lead by looking up the company domain. When the run finishes, the dashboard refreshes and the new leads appear in the review panel for you to accept or reject, which feeds back into the GP scorer for next time.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- pipeline stage explanations -->
   <div class="rv" style="margin-bottom:40px;">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
@@ -506,7 +570,7 @@ footer strong{color:var(--blue)}
       </div>
       <div style="background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:20px;">
         <div style="font-family:var(--head);font-weight:600;font-size:13px;margin-bottom:8px;color:var(--vio);">Stage 4: GP pre-rank (once active)</div>
-        <p style="font-size:13px;color:var(--sub);line-height:1.78;">The Gaussian Process scorer converts each post into a 384-dimensional embedding using FastEmbed. It then uses a trained model to predict the probability that this post is a genuine lead. Posts scoring below 0.2 probability get skipped entirely without reaching the LLM. This stage is inactive until 10 human review decisions have been recorded in the dashboard. Once it activates it handles the cases the regex misses.</p>
+        <p style="font-size:13px;color:var(--sub);line-height:1.78;">Every time you click Accept or Reject on a lead, the system remembers that decision. After 10 clicks, it starts learning your pattern — what kind of posts you tend to keep versus throw away. It converts each post into a list of numbers that captures the meaning of the text, then uses those numbers to build a rough sense of your taste. When a new post comes in, it checks how similar that post is to things you already accepted or rejected and makes a guess about whether you would want it. If it is pretty confident you would reject it, it skips sending that post to the AI entirely. This saves time and cost on content that is obviously not useful. The more you click, the better the guesses get.</p>
       </div>
       <div style="background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:20px;">
         <div style="font-family:var(--head);font-weight:600;font-size:13px;margin-bottom:8px;color:var(--grn);">Stage 5, 6 and 7: Score, qualify and save</div>
@@ -566,7 +630,7 @@ footer strong{color:var(--blue)}
       </div>
       <div class="tdcard">
         <div class="tdhead">Self-learning GP scorer</div>
-        <div class="tdbody">Every accept/reject click saves a (post_text, label) pair. The GP scorer converts post text to 384-dimensional embeddings using FastEmbed, then trains a GaussianProcessRegressor with an RBF kernel. After 10 labels, it activates and assigns probability scores to new posts before they reach the LLM. Posts below 0.2 probability are skipped entirely, saving API calls on low-signal content.</div>
+        <div class="tdbody">Every time you click Accept or Reject on a lead, the system remembers that decision. After 10 clicks it starts learning your pattern. It checks how similar each new post is to things you already accepted or rejected and makes a guess about whether you would want it. If it is confident you would reject it, that post never reaches the AI at all. The more you use it, the better the guesses get.</div>
         <div class="tdmeta">FastEmbed 384-dim → GP(RBF kernel) → P(lead) → skip or score</div>
       </div>
     </div>
