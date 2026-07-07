@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demaze Lead Engine — Project Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #05080f;
+  --s1:    #0a1020;
+  --s2:    #0f1828;
+  --bd:    #182236;
+  --blue:  #4f8ef7;
+  --vio:   #7c5cfc;
+  --grn:   #00c97a;
+  --amb:   #e8a020;
+  --red:   #e84040;
+  --tx:    #dde3ef;
+  --sub:   #6e7f9a;
+  --dim:   #243349;
+  --r: 10px;
+  --mono: 'JetBrains Mono', monospace;
+  --head: 'Space Grotesk', sans-serif;
+  --body: 'DM Sans', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:15px;line-height:1.75;overflow-x:hidden}
+
+/* canvas stars */
+#cvs{position:fixed;inset:0;pointer-events:none;z-index:0}
+
+/* nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:52px;background:rgba(5,8,15,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 48px}
+.nb{font-family:var(--head);font-weight:700;font-size:14px;letter-spacing:-.2px}
+.nb em{color:var(--blue);font-style:normal}
+.nl{display:flex;gap:28px;list-style:none}
+.nl a{font-size:12.5px;color:var(--sub);text-decoration:none;transition:color .2s;font-weight:500}
+.nl a:hover{color:var(--tx)}
+.nav-badge{font-family:var(--mono);font-size:10px;background:rgba(0,201,122,.1);border:1px solid rgba(0,201,122,.25);color:var(--grn);padding:3px 9px;border-radius:10px;letter-spacing:.5px}
+
+/* side dots */
+.sdots{position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;gap:8px}
+.sd{width:5px;height:5px;border-radius:50%;background:var(--dim);cursor:pointer;transition:all .3s}
+.sd.on{background:var(--blue);transform:scale(1.6)}
+
+/* layout */
+.w{max-width:1060px;margin:0 auto;padding:0 48px;position:relative;z-index:1}
+section{position:relative;z-index:1}
+.sec{padding:90px 0}
+.hr{border:none;border-top:1px solid var(--bd)}
+
+/* section header */
+.eye{font-family:var(--mono);font-size:11px;color:var(--blue);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.eye::before{content:'';width:16px;height:1px;background:var(--blue);flex-shrink:0}
+h2{font-family:var(--head);font-size:clamp(24px,3vw,38px);font-weight:700;letter-spacing:-.8px;line-height:1.15;margin-bottom:14px}
+.sub{font-size:15px;color:var(--sub);max-width:560px;line-height:1.8;margin-bottom:52px}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.rv.on{opacity:1;transform:none}
+
+/* ── HERO ── */
+#hero{min-height:100vh;display:flex;align-items:center;padding:80px 0 60px;background:radial-gradient(ellipse 65% 50% at 50% -5%,rgba(79,142,247,.1) 0%,transparent 70%)}
+.hg{display:grid;grid-template-columns:1fr 1.05fr;gap:56px;align-items:center}
+.htag{display:inline-flex;align-items:center;gap:8px;background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);color:var(--blue);font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:20px;margin-bottom:20px;letter-spacing:1px;text-transform:uppercase}
+.htag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--grn);animation:pu 2s ease infinite}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.2}}
+h1{font-family:var(--head);font-size:clamp(30px,4.2vw,50px);font-weight:700;letter-spacing:-1.5px;line-height:1.1;margin-bottom:20px}
+h1 .bl{color:var(--blue)} h1 .vi{color:var(--vio)}
+.hd{font-size:15px;color:var(--sub);max-width:420px;line-height:1.8;margin-bottom:32px}
+.hmeta{display:flex;gap:28px;flex-wrap:wrap}
+.hmi{display:flex;flex-direction:column;gap:2px}
+.hml{font-size:10px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px}
+.hmv{font-size:13px;font-weight:600}
+
+/* terminal */
+.term{background:#060a14;border:1px solid var(--bd);border-radius:12px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.55),0 0 0 1px rgba(79,142,247,.05)}
+.tbar{background:#0b1222;padding:9px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:7px}
+.td{width:10px;height:10px;border-radius:50%}
+.tdr{background:#ff5f57}.tdy{background:#febc2e}.tdg{background:#28c840}
+.ttl{font-family:var(--mono);font-size:11px;color:var(--sub);margin-left:8px;flex:1;text-align:center}
+.tbody{padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.95;min-height:280px;max-height:340px;overflow:hidden}
+.tl{white-space:pre-wrap;word-break:break-all;min-height:1.95em}
+.cb{color:#4f8ef7}.cg{color:#00c97a}.cy{color:#e8a020}.cv{color:#9f80f8}.cm{color:#334560}.cw{color:#dde3ef}
+
+/* ── KEY NUMBERS ── */
+.kn{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--bd);border-radius:12px;overflow:hidden;border:1px solid var(--bd);margin-bottom:68px}
+.kc{background:var(--s1);padding:24px 20px}
+.kn-num{font-family:var(--head);font-size:34px;font-weight:700;letter-spacing:-2px;line-height:1;color:var(--blue)}
+.kn-num.g{color:var(--grn)}.kn-num.v{color:var(--vio)}.kn-num.a{color:var(--amb)}
+.kn-lbl{font-size:11.5px;color:var(--sub);margin-top:4px;line-height:1.4}
+
+/* ── CARDS ── */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:12px}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:20px;transition:border-color .2s,transform .2s,box-shadow .2s;cursor:default}
+.card:hover{border-color:rgba(79,142,247,.28);transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.3)}
+.ci{font-size:20px;margin-bottom:8px}
+.cn{font-family:var(--head);font-weight:600;font-size:13px;margin-bottom:3px}
+.cd{font-size:12px;color:var(--sub);line-height:1.65}
+.tag{display:inline-block;margin-top:8px;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.tb2{background:rgba(79,142,247,.1);color:var(--blue)}
+.tg2{background:rgba(0,201,122,.1);color:var(--grn)}
+.tv2{background:rgba(124,92,252,.1);color:var(--vio)}
+.ta2{background:rgba(232,160,32,.1);color:var(--amb)}
+
+/* ── APPROACH CARDS ── */
+.ag2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:52px}
+.ac{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:22px}
+.ac.bad{border-left:3px solid var(--red)}.ac.good{border-left:3px solid var(--grn)}
+.albl{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+.albl.bad{color:var(--red)}.albl.good{color:var(--grn)}
+.at2{font-family:var(--head);font-weight:600;font-size:14px;margin-bottom:8px}
+.ab2{font-size:13px;color:var(--sub);line-height:1.75}
+.alist{list-style:none;margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.alist li{font-size:13px;color:var(--sub);padding-left:14px;position:relative;line-height:1.6}
+.alist.bad li::before{content:'—';position:absolute;left:0;color:var(--red);opacity:.4}
+.alist.good li::before{content:'—';position:absolute;left:0;color:var(--grn);opacity:.55}
+
+/* ── PIPELINE ── */
+.pflow{display:flex;overflow-x:auto;padding-bottom:12px;margin-bottom:48px}
+.pstep{flex:1;min-width:100px;text-align:center;position:relative}
+.pstep:not(:last-child)::after{content:'›';position:absolute;right:-8px;top:17px;color:var(--blue);font-size:20px;z-index:2}
+.pnode{width:44px;height:44px;border-radius:11px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:17px;border:1.5px solid var(--bd);background:var(--s1);transition:all .25s;cursor:default}
+.pstep:hover .pnode{border-color:var(--blue);background:rgba(79,142,247,.1);transform:scale(1.1);box-shadow:0 0 14px rgba(79,142,247,.18)}
+.pnm{font-size:11px;font-weight:600}
+.pns{font-size:10px;color:var(--sub);margin-top:1px;line-height:1.35}
+
+/* ── CODE BLOCK ── */
+.code-block{background:#060b16;border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:20px}
+.cb-header{background:#0b1120;padding:9px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.cb-title{font-family:var(--mono);font-size:11px;color:var(--sub)}
+.cb-lang{font-family:var(--mono);font-size:10px;color:var(--blue);background:rgba(79,142,247,.1);padding:2px 7px;border-radius:4px}
+.cb-body{padding:16px 18px;font-family:var(--mono);font-size:12.5px;line-height:1.85;overflow-x:auto}
+.cb-body pre{white-space:pre}
+.ck{color:#7c5cfc}.cs{color:#e8a020}.cc{color:#4a5e78;font-style:italic}.cf{color:#4f8ef7}.co{color:#e84040}.cn2{color:#00c97a}.cp{color:#dde3ef}
+
+/* ── JOURNEY ── */
+.jo{position:relative;padding-left:32px}
+.jo::before{content:'';position:absolute;left:10px;top:8px;bottom:8px;width:1.5px;background:linear-gradient(180deg,var(--blue) 0%,var(--vio) 65%,transparent 100%)}
+.jst{position:relative;margin-bottom:30px;opacity:0;transform:translateX(-12px);transition:opacity .5s ease,transform .5s ease}
+.jst.on{opacity:1;transform:none}
+.jdot{position:absolute;left:-26px;top:7px;width:14px;height:14px;border-radius:50%;background:var(--s1);border:2px solid var(--blue);display:flex;align-items:center;justify-content:center}
+.jdi{width:4px;height:4px;border-radius:50%;background:var(--blue)}
+.jb{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:18px 22px;transition:border-color .2s}
+.jb:hover{border-color:rgba(79,142,247,.22)}
+.jhead{display:flex;align-items:flex-start;gap:8px;margin-bottom:9px}
+.jlbl{flex-shrink:0;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:4px;margin-top:2px}
+.jprob{background:rgba(232,64,64,.1);color:var(--red)}
+.jfix2{background:rgba(0,201,122,.1);color:var(--grn)}
+.jtitle{font-family:var(--head);font-weight:600;font-size:14px;line-height:1.4}
+.jbody{font-size:13px;color:var(--sub);line-height:1.78;margin-bottom:11px}
+.jresult{background:rgba(0,201,122,.05);border:1px solid rgba(0,201,122,.13);border-radius:6px;padding:10px 13px;font-size:13px;color:#5bbf90;line-height:1.7}
+.jresult strong{color:rgba(0,201,122,.7);font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.5px;display:block;margin-bottom:3px;text-transform:uppercase}
+
+/* ── TECH DEEP DIVE ── */
+.tdgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:52px}
+.tdcard{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:22px}
+.tdcard.highlight{border-color:rgba(79,142,247,.25);background:rgba(79,142,247,.03)}
+.tdhead{font-family:var(--head);font-weight:600;font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.tdbadge{font-size:10px;font-family:var(--mono);padding:2px 6px;border-radius:4px;background:rgba(79,142,247,.1);color:var(--blue)}
+.tdbody{font-size:13px;color:var(--sub);line-height:1.75}
+.tdmeta{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:8px}
+.decision-row{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.decision-row:last-child{margin-bottom:0}
+.d-label{flex-shrink:0;font-family:var(--mono);font-size:10px;color:var(--blue);font-weight:600;letter-spacing:.5px;padding-top:2px;min-width:70px}
+.d-text{font-size:13px;color:var(--sub);line-height:1.7}
+
+/* ── PERFORMANCE ── */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:68px}
+.pcard{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:20px}
+.pbefore{font-family:var(--head);font-size:20px;font-weight:700;color:var(--red);text-decoration:line-through;opacity:.6;line-height:1}
+.pafter{font-family:var(--head);font-size:26px;font-weight:700;color:var(--grn);margin-bottom:5px;line-height:1.1}
+.plbl{font-size:12px;color:var(--sub);line-height:1.5}
+.pchange{font-family:var(--mono);font-size:10px;color:var(--grn);margin-top:5px}
+
+/* ── AI COMPARE ── */
+.aicmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:48px}
+.aicard{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:22px}
+.aicard.cur{border-top:2px solid var(--blue)}
+.aicard.fut{border-top:2px dashed var(--vio)}
+.aibadge{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:600}
+.aibadge.c{color:var(--blue)}.aibadge.f{color:var(--vio)}
+.aimodel{font-family:var(--head);font-weight:700;font-size:15px;margin-bottom:4px}
+.aiby{font-size:12px;color:var(--sub);margin-bottom:12px}
+.aipts{list-style:none;display:flex;flex-direction:column;gap:6px}
+.aipts li{font-size:13px;color:var(--sub);padding-left:14px;position:relative;line-height:1.6}
+.aipts li::before{content:'·';position:absolute;left:3px;color:var(--sub);font-size:15px;top:-1px}
+.ainote{background:rgba(124,92,252,.05);border:1px solid rgba(124,92,252,.13);border-radius:8px;padding:14px 18px;margin-top:14px;font-size:13px;color:var(--sub);line-height:1.75}
+.ainote strong{color:var(--vio)}
+
+/* ── LEADS ── */
+.lgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:12px;margin-bottom:68px}
+.lcard{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:18px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s}
+.lcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--vio))}
+.lcard:hover{transform:translateY(-3px);box-shadow:0 12px 36px rgba(0,0,0,.35);border-color:rgba(79,142,247,.2)}
+.lscore{float:right;margin-left:8px;font-family:var(--head);font-weight:700;font-size:13px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.s10{background:rgba(0,201,122,.13);color:var(--grn)}
+.s8{background:rgba(79,142,247,.13);color:var(--blue)}
+.lname{font-family:var(--head);font-weight:700;font-size:14px;margin-bottom:1px}
+.lrole{font-size:11px;color:var(--sub);margin-bottom:9px}
+.lquote{font-size:13px;color:#8ca0b8;line-height:1.65;font-style:italic}
+.lplat{margin-top:10px;display:inline-block;font-size:10px;font-weight:600;font-family:var(--mono);letter-spacing:.5px;padding:2px 7px;border-radius:4px}
+.pli{background:rgba(0,119,181,.1);color:#4a9fd4}
+.prd{background:rgba(255,69,0,.1);color:#e05a20}
+
+/* ── LIMITS ── */
+.limgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:64px}
+.lim{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);padding:20px}
+.limh{font-family:var(--head);font-weight:600;font-size:13.5px;margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.limb{font-size:13px;color:var(--sub);line-height:1.75}
+
+/* ── FUTURE ── */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:12px;margin-bottom:64px}
+.fc{background:var(--s1);border:1px dashed rgba(124,92,252,.2);border-radius:var(--r);padding:18px;opacity:.7;transition:opacity .2s,border-color .2s}
+.fc:hover{opacity:1;border-color:var(--vio)}
+.fn{font-family:var(--mono);font-size:10px;color:var(--vio);margin-bottom:7px}
+.ftitle{font-family:var(--head);font-weight:600;font-size:13px;margin-bottom:4px}
+.fbody{font-size:12px;color:var(--sub);line-height:1.65}
+
+/* outro */
+.outro{background:linear-gradient(135deg,rgba(79,142,247,.07),rgba(124,92,252,.07));border:1px solid rgba(79,142,247,.16);border-radius:13px;padding:40px;text-align:center}
+.ot{font-family:var(--head);font-size:20px;font-weight:700;margin-bottom:12px;letter-spacing:-.4px}
+.os{font-size:15px;color:var(--sub);max-width:480px;margin:0 auto 20px;line-height:1.8}
+.pillrow{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}
+.pill{font-size:12px;font-weight:600;padding:5px 12px;border-radius:18px}
+
+/* footer */
+footer{padding:40px 0;text-align:center;font-size:13px;color:var(--sub);border-top:1px solid var(--bd);position:relative;z-index:1}
+footer strong{color:var(--blue)}
+
+@media(max-width:760px){
+  .hg,.ag2,.aicmp,.limgrid,.tdgrid{grid-template-columns:1fr}
+  .w{padding:0 20px}
+  nav{padding:0 20px}
+  .nl,.sdots{display:none}
+  .pflow{flex-direction:column;align-items:flex-start}
+  .pstep::after{display:none}
+}
+</style>
+</head>
+<body>
+
+<canvas id="cvs"></canvas>
+
+<nav>
+  <div class="nb">demaze <em>lead engine</em></div>
+  <ul class="nl">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#journey">Journey</a></li>
+    <li><a href="#howitworks">Architecture</a></li>
+    <li><a href="#ai">AI</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#next">Roadmap</a></li>
+  </ul>
+  <span class="nav-badge">demaze-v2 · live</span>
+</nav>
+
+<div class="sdots" id="sdots">
+  <div class="sd on" onclick="gs('hero')"></div>
+  <div class="sd" onclick="gs('problem')"></div>
+  <div class="sd" onclick="gs('journey')"></div>
+  <div class="sd" onclick="gs('howitworks')"></div>
+  <div class="sd" onclick="gs('ai')"></div>
+  <div class="sd" onclick="gs('results')"></div>
+  <div class="sd" onclick="gs('next')"></div>
+</div>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section id="hero">
+<div class="w">
+<div class="hg">
+  <div>
+    <div class="htag">Project Report · July 2026</div>
+    <h1>Automated B2B<br><span class="bl">Lead Discovery</span><br><span class="vi">from Scratch</span></h1>
+    <p class="hd">Built a full pipeline in Python that monitors LinkedIn, Reddit, and Twitter in real time, scores posts with AI, and surfaces business owners actively looking for software development.</p>
+    <div class="hmeta">
+      <div class="hmi"><span class="hml">Author</span><span class="hmv">Aarav Singh</span></div>
+      <div class="hmi"><span class="hml">Org</span><span class="hmv">Demaze Technologies</span></div>
+      <div class="hmi"><span class="hml">Replaced</span><span class="hmv">n8n workflow</span></div>
+      <div class="hmi"><span class="hml">Stack</span><span class="hmv">Python · FastAPI · Supabase</span></div>
+    </div>
+  </div>
+  <div class="term">
+    <div class="tbar">
+      <div class="td tdr"></div><div class="td tdy"></div><div class="td tdg"></div>
+      <span class="ttl">pipeline · live output</span>
+    </div>
+    <div class="tbody" id="tb"></div>
+  </div>
+</div>
+</div>
+</section>
+
+<hr class="hr">
+
+<!-- ═══════════════ PROBLEM ═══════════════ -->
+<section id="problem">
+<div class="w"><div class="sec">
+  <div class="rv">
+    <div class="eye">01 — The problem</div>
+    <h2>Finding real leads is genuinely hard</h2>
+    <p class="sub">Most lead generation tools search for keywords. Keywords attract the wrong people. This is the story of figuring out a better way.</p>
+  </div>
+
+  <div class="ag2 rv">
+    <div class="ac bad">
+      <div class="albl bad">What we tried first</div>
+      <div class="at2">Keyword search across platforms</div>
+      <div class="ab2">Starting in n8n, we searched LinkedIn and other platforms with terms like "looking for developer", "need software built", "hire app team". Logical starting point.</div>
+      <ul class="alist bad">
+        <li>Results were overwhelmingly agencies promoting services</li>
+        <li>Developers writing about their own projects ranked highly</li>
+        <li>Job listings mixed in constantly</li>
+        <li>Actual buyers rarely write the words you search for</li>
+        <li>AI had to score hundreds of irrelevant posts every run</li>
+      </ul>
+    </div>
+    <div class="ac good">
+      <div class="albl good">The insight that changed everything</div>
+      <div class="at2">Feed-based discovery (from OpenOutreach)</div>
+      <div class="ab2">Studying the open-source OpenOutreach project revealed a fundamentally different approach: scroll through the LinkedIn feed, not search results.</div>
+      <ul class="alist good">
+        <li>Feed posts come from actual founders and business owners</li>
+        <li>People describe real problems they are stuck on right now</li>
+        <li>Context is visible — who they are, what they run, what stage they're at</li>
+        <li>These posts never contain "hire developer" — they contain business problems</li>
+        <li>Lead quality on the very first test run improved dramatically</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="rv" style="background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:28px;margin-bottom:16px;">
+    <div style="font-family:var(--head);font-weight:600;font-size:15px;margin-bottom:16px;">The core insight</div>
+    <p style="font-size:14px;color:var(--sub);line-height:1.85;max-width:700px;">
+      Real clients don't write "I'm looking for a developer." They write "our inventory system is a spreadsheet and
+      we have 12 staff now and it's breaking down" or "we need to digitise this entire workflow before Q3."
+      Keyword search will never find these people. Feed browsing surfaces them naturally — the same way a human
+      would spot an opportunity while scrolling. We built a system to do that at scale.
+    </p>
+  </div>
+</div></div>
+</section>
+
+<hr class="hr">
+
+<!-- ═══════════════ JOURNEY ═══════════════ -->
+<section id="journey">
+<div class="w"><div class="sec">
+  <div class="rv">
+    <div class="eye">02 — The journey</div>
+    <h2>From n8n to a production Python system</h2>
+    <p class="sub">Each iteration revealed a new constraint. Here is what changed, why, and what the outcome was.</p>
+  </div>
+
+  <div class="jo">
+
+    <div class="jst">
+      <div class="jdot"><div class="jdi"></div></div>
+      <div class="jb">
+        <div class="jhead"><span class="jlbl jprob">v1 · n8n</span><span class="jtitle">Started with n8n — worked, but hit a ceiling fast</span></div>
+        <p class="jbody">n8n was the right starting point for quick automation without infrastructure. We connected LinkedIn search, basic scoring, and Supabase storage. But as soon as we needed custom scoring logic, ML models, or proper concurrency, n8n's node-based model became a constraint. Every edge case needed a workaround. There was no way to add a feedback loop or train anything from historical decisions.</p>
+        <div class="jresult"><strong>Decision</strong>Rebuilt from scratch in Python with FastAPI. Full control over scoring logic, async execution, and the ability to add ML components properly.</div>
+      </div>
+    </div>
+
+    <div class="jst">
+      <div class="jdot"><div class="jdi"></div></div>
+      <div class="jb">
+        <div class="jhead"><span class="jlbl jprob">v1–v2</span><span class="jtitle">Keyword search kept returning agencies, not clients</span></div>
+        <p class="jbody">Both in n8n and early Python, searching LinkedIn with "hire developer" or "need software built" returned results dominated by agencies self-promoting, developers posting about their own work, and job listings. After scoring hundreds of irrelevant posts, the pattern was clear: real buyers don't phrase their need as a search query. They describe a situation.</p>
+        <div class="jresult"><strong>Turning point</strong>Found OpenOutreach, an open-source project that scrolls the LinkedIn feed instead of searching. Adapted that approach using Playwright browser automation. First run returned noticeably different — and better — leads.</div>
+      </div>
+    </div>
+
+    <div class="jst">
+      <div class="jdot"><div class="jdi"></div></div>
+      <div class="jb">
+        <div class="jhead"><span class="jlbl jprob">v2 · scoring</span><span class="jtitle">Scoring 60 leads was taking 5+ minutes and stalling on rate limits</span></div>
+        <p class="jbody">The original scorer sent one post per API call, with a 2.1s sleep between calls to avoid rate limits on Groq's free tier. 60 leads meant 60 calls and 126 seconds of pure sleep time. Even with concurrency added, hitting Groq's 30 RPM limit caused retry loops that stalled the whole pipeline. Switching to NVIDIA still hit limits when running 6 concurrent calls.</p>
+        <div class="jresult"><strong>Fix</strong>Batch scoring: send 5 leads in one prompt, get back a JSON array of 5 scores. 60 leads → 12 API calls. Semaphore(3) for controlled concurrency. asyncio.gather() to run batches in parallel. Total scoring time: ~45 seconds. NVIDIA Nemotron-49B as primary, Groq Llama-70B as automatic fallback.</div>
+      </div>
+    </div>
+
+    <div class="jst">
+      <div class="jdot"><div class="jdi"></div></div>
+      <div class="jb">
+        <div class="jhead"><span class="jlbl jprob">v2 · UX</span><span class="jtitle">LinkedIn ran silently for 5 minutes — impossible to tell if it was working</span></div>
+        <p class="jbody">The LinkedIn scraper runs as a subprocess (Playwright browser). The original implementation used subprocess.run(), which buffers all output and only delivers it after the process exits. A 3–5 minute browser run meant the dashboard log panel showed nothing for minutes. Users assumed the pipeline had crashed.</p>
+        <div class="jresult"><strong>Fix</strong>Replaced subprocess.run() with subprocess.Popen() + line-by-line reading. Each output line is forwarded to the async event loop immediately via loop.call_soon_threadsafe(). Now every scroll action and collected post appears in the dashboard log in real time as it happens.</div>
+      </div>
+    </div>
+
+    <div class="jst">
+      <div class="jdot"><div class="jdi"></div></div>
+      <div class="jb">
+        <div class="jhead"><span class="jlbl jprob">v2 · deploy</span><span class="jtitle">LinkedIn on cloud simply does not work — blocked by design</span></div>
+        <p class="jbody">After deploying to Railway, LinkedIn failed completely. Two separate issues: session files were gitignored so Railway had nothing to authenticate with, and LinkedIn's anti-bot system actively blocks datacenter IP ranges from AWS, Railway, and Render. Even with session files present, the IP would get flagged immediately.</p>
+        <div class="jresult"><strong>Architecture decision</strong>LinkedIn must run on a residential IP (home/office connection). Current setup: Cloudflare Tunnel runs on a local PC and exposes a permanent public HTTPS URL. LinkedIn sees a normal residential IP. Reddit and Twitter run on Railway without issue since they don't have this restriction.</div>
+      </div>
+    </div>
+
+    <div class="jst">
+      <div class="jdot"><div class="jdi"></div></div>
+      <div class="jb">
+        <div class="jhead"><span class="jlbl jfix2">ongoing</span><span class="jtitle">Edge cases in AI scoring — technical founders, indirect signals</span></div>
+        <p class="jbody">Feed-based scraping dramatically improved signal quality but the scoring model still has edge cases. A technical founder describing a scaling challenge can look like a developer to the AI. Posts that describe a business problem without explicitly asking for software development are genuinely ambiguous. These require human judgement.</p>
+        <div class="jresult"><strong>Long-term fix</strong>The GP (Gaussian Process) scorer learns from every accept/reject click in the dashboard. Once 10 labelled examples are accumulated, it activates and starts pre-filtering posts before they reach the LLM — reducing cost and improving accuracy on exactly the edge cases the LLM struggles with. This gets smarter the more it's used.</div>
+      </div>
+    </div>
+
+  </div>
+</div></div>
+</section>
+
+<hr class="hr">
+
+<!-- ═══════════════ HOW IT WORKS ═══════════════ -->
+<section id="howitworks">
+<div class="w"><div class="sec">
+  <div class="rv">
+    <div class="eye">03 — Under the hood</div>
+    <h2>How the system actually works</h2>
+    <p class="sub">The full architecture — from scraping to saving — and the specific technical decisions behind each part.</p>
+  </div>
+
+  <!-- pipeline flow -->
+  <div class="rv">
+  <div style="font-size:12px;color:var(--sub);text-transform:uppercase;letter-spacing:2px;margin-bottom:18px;font-family:var(--mono);">Pipeline stages</div>
+  <div class="pflow">
+    <div class="pstep"><div class="pnode">🌐</div><div class="pnm">Scrape</div><div class="pns">Feed + APIs</div></div>
+    <div class="pstep"><div class="pnode">🔗</div><div class="pnm">Deduplicate</div><div class="pns">post_id key</div></div>
+    <div class="pstep"><div class="pnode">🚫</div><div class="pnm">Hard reject</div><div class="pns">7 regex rules</div></div>
+    <div class="pstep"><div class="pnode">🧠</div><div class="pnm">GP pre-rank</div><div class="pns">skip P &lt; 0.2</div></div>
+    <div class="pstep"><div class="pnode">🤖</div><div class="pnm">Batch score</div><div class="pns">5 per LLM call</div></div>
+    <div class="pstep"><div class="pnode">✅</div><div class="pnm">Qualify</div><div class="pns">score ≥ 7</div></div>
+    <div class="pstep"><div class="pnode">💾</div><div class="pnm">Save</div><div class="pns">Supabase async</div></div>
+  </div>
+  </div>
+
+  <!-- system diagram -->
+  <div class="code-block rv">
+    <div class="cb-header"><span class="cb-title">System architecture</span><span class="cb-lang">diagram</span></div>
+    <div class="cb-body"><pre><span class="cf">Browser Dashboard</span> <span class="cm">← single HTML file, no framework</span>
+   │  SSE  → real-time logs + progress bar    <span class="cm">← EventSource, not WebSocket</span>
+   │  REST → lead list, feedback, run trigger
+   ▼
+<span class="cv">FastAPI</span> (main.py)  <span class="cc">← uvicorn, async, port 3000</span>
+   │
+   ├── <span class="cf">/api/pipeline/run</span>  → spawns background task
+   ├── <span class="cf">/api/stream</span>        → SSE endpoint, broadcasts log queue
+   ├── <span class="cf">/api/leads</span>         → paginated Supabase fetch
+   └── <span class="cf">/api/feedback</span>      → accept/reject → trains GP
+         │
+         ▼
+<span class="cn2">Pipeline</span> (pipeline.py)
+   ├── Reddit + Twitter  <span class="cn2">run in parallel</span>  via asyncio.gather()
+   ├── LinkedIn          <span class="cy">sequential</span>       via Playwright subprocess
+   └── Scoring           <span class="cn2">concurrent</span>       via asyncio.gather(batches)
+         │
+         ▼
+<span class="cv">Scorer</span> (scorer.py)
+   ├── Hard-reject regex  <span class="cm">→ no API call needed</span>
+   ├── GP pre-filter      <span class="cm">→ skip if probability &lt; 0.2</span>
+   └── Batch LLM          <span class="cm">→ 5 posts per call, Semaphore(3)</span>
+        ├── <span class="cn2">NVIDIA Nemotron-49B</span>   primary
+        └── <span class="cy">Groq Llama-3.3-70B</span>   auto fallback on 429</pre>
+    </div>
+  </div>
+
+  <!-- batch scoring deep dive -->
+  <div class="rv" style="margin-bottom:20px;">
+    <div style="font-family:var(--head);font-weight:600;font-size:16px;margin-bottom:18px;letter-spacing:-.3px;">Batch scoring — the key optimisation</div>
+    <div class="tdgrid">
+      <div class="tdcard highlight">
+        <div class="tdhead">Why 5 leads per call <span class="tdbadge">design decision</span></div>
+        <div class="tdbody">Sending each lead individually meant 60+ API calls per run, constant rate limit hits, and sequential waits. Batching 5 leads into one prompt with a structured JSON response format cuts calls to 12 and fits comfortably within any free-tier limit. The model returns a JSON array — one score and reasoning per lead — which gets parsed and matched back to the original posts.</div>
+        <div class="tdmeta">60 leads → 12 calls → fits 30 RPM free tier with room to spare</div>
+      </div>
+      <div class="tdcard">
+        <div class="tdhead">Concurrency model</div>
+        <div class="tdbody">asyncio.Semaphore(3) limits simultaneous API calls. asyncio.gather() runs all 12 batches concurrently within that limit. A single shared httpx.AsyncClient is reused across all calls, eliminating per-call TCP connection overhead. The same gather pattern applies to Supabase writes — all leads are saved in parallel, not sequentially.</div>
+        <div class="tdmeta">Semaphore(3) × 12 batches = wall time of ~4 batches sequentially</div>
+      </div>
+      <div class="tdcard">
+        <div class="tdhead">SSE vs WebSocket <span class="tdbadge">design decision</span></div>
+        <div class="tdbody">Log streaming uses Server-Sent Events over a persistent HTTP connection. SSE is unidirectional (server → browser only), which is exactly what's needed here. No handshake overhead, no socket management, works through proxies, and the browser's EventSource API handles reconnection automatically. WebSockets would add complexity for no benefit.</div>
+        <div class="tdmeta">Single HTTP connection, EventSource handles reconnect</div>
+      </div>
+      <div class="tdcard">
+        <div class="tdhead">Self-learning GP scorer</div>
+        <div class="tdbody">Every accept/reject click saves a (post_text, label) pair. The GP scorer converts post text to 384-dimensional embeddings using FastEmbed, then trains a GaussianProcessRegressor with an RBF kernel. After 10 labels, it activates and assigns probability scores to new posts before they reach the LLM. Posts below 0.2 probability are skipped entirely, saving API calls on low-signal content.</div>
+        <div class="tdmeta">FastEmbed 384-dim → GP(RBF kernel) → P(lead) → skip or score</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- scoring prompt logic -->
+  <div class="code-block rv">
+    <div class="cb-header"><span class="cb-title">scorer.py — batch prompt structure</span><span class="cb-lang">python (simplified)</span></div>
+    <div class="cb-body"><pre><span class="cc"># 5 leads per call. Model returns a JSON array.</span>
+<span class="ck">def</span> <span class="cf">_build_batch_prompt</span>(leads: <span class="cs">list</span>) -> <span class="cs">str</span>:
+    <span class="co">SYSTEM</span> = <span class="cs">"""Score each post 1-10 for software development intent.
+Immediately score 1 if the author is a developer, agency, writing a success
+story, posting a job, or producing promotional content.
+Score 9-10: explicitly requests software to be built.
+Score 7-8:  business problem that clearly requires a software solution.
+Return JSON array only: [{"id":0,"score":8,"reason":"..."},...]"""</span>
+
+    posts_block = <span class="cs">"\n\n"</span>.join(
+        <span class="cs">f"POST {i}: {lead['text'][:800]}"</span>
+        <span class="ck">for</span> i, lead <span class="ck">in</span> <span class="cf">enumerate</span>(leads)
+    )
+    <span class="ck">return</span> <span class="cs">f"{SYSTEM}\n\n{posts_block}"</span>
+
+<span class="cc"># Primary: NVIDIA. Fallback: Groq. Transparent to caller.</span>
+<span class="ck">async def</span> <span class="cf">_score_batch</span>(leads: <span class="cs">list</span>) -> <span class="cs">list</span>:
+    <span class="ck">async with</span> _sem:  <span class="cc"># Semaphore(3)</span>
+        result = <span class="ck">await</span> <span class="cf">_call_nvidia</span>(leads)
+        <span class="ck">if</span> result <span class="ck">is None</span>:   <span class="cc"># 429 or error</span>
+            result = <span class="ck">await</span> <span class="cf">_call_groq</span>(leads)
+        <span class="ck">return</span> result
+
+<span class="cc"># All batches run concurrently within the semaphore limit</span>
+batches = [leads[i:i+<span class="cs">5</span>] <span class="ck">for</span> i <span class="ck">in</span> <span class="cf">range</span>(<span class="cs">0</span>, <span class="cf">len</span>(leads), <span class="cs">5</span>)]
+results = <span class="ck">await</span> asyncio.<span class="cf">gather</span>(*[<span class="cf">_score_batch</span>(b) <span class="ck">for</span> b <span class="ck">in</span> batches])</pre>
+    </div>
+  </div>
+
+  <!-- SSE streaming -->
+  <div class="code-block rv">
+    <div class="cb-header"><span class="cb-title">LinkedIn log streaming — thread → async bridge</span><span class="cb-lang">python (simplified)</span></div>
+    <div class="cb-body"><pre><span class="cc"># Playwright runs in a subprocess. Popen() gives us lines as they arrive.</span>
+<span class="cc"># loop.call_soon_threadsafe() bridges the blocking thread to the async loop.</span>
+<span class="ck">def</span> <span class="cf">_stream_subprocess</span>(process, loop, log_fn):
+    <span class="ck">for</span> line <span class="ck">in</span> process.stdout:          <span class="cc"># blocks in thread — that's fine</span>
+        loop.<span class="cf">call_soon_threadsafe</span>(log_fn, line.strip())
+
+<span class="ck">async def</span> <span class="cf">fetch_linkedin_leads</span>(mode=<span class="cs">"hot"</span>, log=print):
+    loop = asyncio.<span class="cf">get_event_loop</span>()
+    process = subprocess.<span class="cf">Popen</span>(
+        [sys.executable, <span class="cs">"-u"</span>, scraper_path],  <span class="cc"># -u = unbuffered stdout</span>
+        stdout=PIPE, stderr=STDOUT, text=<span class="ck">True</span>, bufsize=<span class="cs">1</span>
+    )
+    <span class="cc"># Run blocking readline loop in thread pool — doesn't block event loop</span>
+    <span class="ck">await</span> loop.<span class="cf">run_in_executor</span>(<span class="ck">None</span>, _stream_subprocess, process, loop, log)</pre>
+    </div>
+  </div>
+
+  <!-- key numbers -->
+  <div class="rv" style="margin-top:52px;">
+    <div style="font-size:12px;color:var(--sub);text-transform:uppercase;letter-spacing:2px;margin-bottom:18px;font-family:var(--mono);">By the numbers</div>
+    <div class="kn">
+      <div class="kc"><div class="kn-num" data-to="206">0</div><div class="kn-lbl">Posts processed<br>per run</div></div>
+      <div class="kc"><div class="kn-num v" data-to="12">0</div><div class="kn-lbl">LLM calls to<br>score all posts</div></div>
+      <div class="kc"><div class="kn-num g" data-to="45" data-sfx="s">0</div><div class="kn-lbl">Scoring time<br>(was 5+ min)</div></div>
+      <div class="kc"><div class="kn-num" data-to="3">0</div><div class="kn-lbl">Concurrent LLM<br>calls (semaphore)</div></div>
+      <div class="kc"><div class="kn-num" data-to="384">0</div><div class="kn-lbl">Embedding dims<br>(FastEmbed GP)</div></div>
+      <div class="kc"><div class="kn-num g" data-to="6">0</div><div class="kn-lbl">Qualified leads<br>per run</div></div>
+    </div>
+  </div>
+
+</div></div>
+</section>
+
+<hr class="hr">
+
+<!-- ═══════════════ AI ═══════════════ -->
+<section id="ai">
+<div class="w"><div class="sec">
+  <div class="rv">
+    <div class="eye">04 — AI models</div>
+    <h2>Current setup and what a better model unlocks</h2>
+    <p class="sub">The system is model-agnostic by design. Swapping providers is a one-line change. Here is where the current model does well and where it falls short.</p>
+  </div>
+
+  <div class="aicmp rv">
+    <div class="aicard cur">
+      <div class="aibadge c">Currently in production</div>
+      <div class="aimodel">NVIDIA Nemotron-49B</div>
+      <div class="aiby">nvidia/llama-3.3-nemotron-super-49b-v1.5 · free via NVIDIA NIM</div>
+      <ul class="aipts">
+        <li>No billing required — starts immediately on a free API key</li>
+        <li>Handles the 5-lead batch format reliably, consistent JSON output</li>
+        <li>Good baseline accuracy on clear-cut cases (explicit "build me X" posts)</li>
+        <li>Falls back to Groq Llama-3.3-70B automatically on 429</li>
+        <li>Struggles with indirect signals and ambiguous founder context</li>
+        <li>Context window caps how long each post can be before trimming</li>
+      </ul>
+    </div>
+    <div class="aicard fut">
+      <div class="aibadge f">Where Claude / Gemini would improve this</div>
+      <div class="aimodel">Claude Sonnet or Gemini Pro</div>
+      <div class="aiby">Anthropic / Google · paid or generous free tiers</div>
+      <ul class="aipts">
+        <li>200k token context — can pass the full post, author bio, and company info without trimming</li>
+        <li>Much better at indirect signals: "we're manually running this in spreadsheets for 200 clients" → lead, not just noise</li>
+        <li>Claude follows structured scoring instructions with notably fewer format errors</li>
+        <li>Gemini Pro: 1 million tokens/day free — easily enough for current volume without billing</li>
+        <li>Both support system-level calibration prompts that can be tuned from real false-positive data</li>
+        <li>Better false-reject rate on technical founders who also happen to write about code</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ainote rv">
+    <strong>Why not switched yet.</strong> The current free-tier models handle the volume comfortably. The bigger
+    accuracy gains come from the GP scorer accumulating labelled examples, which costs nothing. Once the GP is
+    active, the LLM only sees posts with a reasonable prior probability of being a lead — so model quality matters
+    less at volume and more at the margin. That's the right time to upgrade.
+  </div>
+</div></div>
+</section>
+
+<hr class="hr">
+
+<!-- ═══════════════ RESULTS ═══════════════ -->
+<section id="results">
+<div class="w"><div class="sec">
+  <div class="rv">
+    <div class="eye">05 — Results</div>
+    <h2>Leads found in a single run</h2>
+    <p class="sub">These are real posts from one pipeline execution. All six scored 8 or above. These are the posts keyword search would never have surfaced.</p>
+  </div>
+  <div class="lgrid rv">
+    <div class="lcard">
+      <div class="lscore s10">10</div>
+      <div class="lname">Raj Perwani</div>
+      <div class="lrole">Founder · Coco 9, Corporate Gifting</div>
+      <div class="lquote">"Looking for experienced Odoo developers to set up POS, receipt printing, SRB tax configuration, inventory management, and branch-wise operations."</div>
+      <span class="lplat pli">LinkedIn</span>
+    </div>
+    <div class="lcard">
+      <div class="lscore s10">10</div>
+      <div class="lname">Md Sarwar Alam</div>
+      <div class="lrole">Founder · F.K Agro Solutions</div>
+      <div class="lquote">"Looking for a web and app development partner to build a full digital ecosystem — website, admin panel, Android app, inventory and CRM integration."</div>
+      <span class="lplat pli">LinkedIn</span>
+    </div>
+    <div class="lcard">
+      <div class="lscore s10">10</div>
+      <div class="lname">Business Owner</div>
+      <div class="lrole">r/BusinessIntelligence</div>
+      <div class="lquote">"Sales team expanding faster than our infrastructure can handle. Need end-to-end workflow automation from lead scoring to hand-offs. Can't hire a dev team for a 6-month build."</div>
+      <span class="lplat prd">Reddit</span>
+    </div>
+    <div class="lcard">
+      <div class="lscore s8">8</div>
+      <div class="lname">Madhulika Joshi Pallod</div>
+      <div class="lrole">CEO · Martist</div>
+      <div class="lquote">"Building a scalable consumer-tech platform for a global lifestyle community. Market research done, business model locked. Need a tech team."</div>
+      <span class="lplat pli">LinkedIn</span>
+    </div>
+    <div class="lcard">
+      <div class="lscore s8">8</div>
+      <div class="lname">App Idea Seeker</div>
+      <div class="lrole">r/AppBuilding</div>
+      <div class="lquote">"I have an app idea but no skill to build it. Looking for a real team — builder, UX designer, security. Willing to take a chance on the concept."</div>
+      <span class="lplat prd">Reddit</span>
+    </div>
+    <div class="lcard">
+      <div class="lscore s8">8</div>
+      <div class="lname">Dr Sriinidhi BV</div>
+      <div class="lrole">Founder · Aignoz Health</div>
+      <div class="lquote">"Healthcare's problem isn't app shortage — it's systems shortage. Looking for architects who understand clinical workflow interoperability."</div>
+      <span class="lplat pli">LinkedIn</span>
+    </div>
+  </div>
+</div></div>
+</section>
+
+<hr class="hr">
+
+<!-- ═══════════════ NEXT ═══════════════ -->
+<section id="next">
+<div class="w"><div class="sec">
+  <div class="rv">
+    <div class="eye">06 — Limitations and roadmap</div>
+    <h2>What it can't do yet</h2>
+    <p class="sub">Honest about current gaps. These are engineering constraints, not fundamental problems.</p>
+  </div>
+
+  <div class="limgrid rv">
+    <div class="lim">
+      <div class="limh"><span>🌐</span>LinkedIn requires a residential machine</div>
+      <div class="limb">LinkedIn actively blocks cloud datacenter IPs at the network level. Not a policy issue — it's infrastructure-level blocking. The Cloudflare Tunnel workaround works well but means the system isn't fully autonomous. A local PC needs to be running. The right long-term fix is LinkedIn Sales Navigator API access ($80/month) or the Voyager internal API — both remove the Playwright dependency entirely.</div>
+    </div>
+    <div class="lim">
+      <div class="limh"><span>🧠</span>GP scorer is waiting for data</div>
+      <div class="limb">The self-learning component needs 10 labelled decisions to activate. Every review in the dashboard contributes. Once active, it pre-filters posts before they hit the LLM — reducing cost and handling the ambiguous edge cases the AI model currently struggles with. This is the most impactful unactivated feature in the system right now.</div>
+    </div>
+    <div class="lim">
+      <div class="limh"><span>📧</span>Email enrichment is partial</div>
+      <div class="limb">Hunter.io email lookup works for roughly 30% of leads — only when the lead's company domain is clearly identifiable. Most LinkedIn posts don't include a company website. The outreach step is built; it just can't complete automatically for the majority of leads yet. Apollo or Clay integrations would improve coverage significantly.</div>
+    </div>
+    <div class="lim">
+      <div class="limh"><span>🎯</span>Still some false positives at the edges</div>
+      <div class="limb">Technical founders who write about scaling problems, posts that describe a clear business gap without explicitly asking for software — these are genuinely hard to classify without broader context. The GP scorer, once trained on real accept/reject data from this specific business context, will handle these far better than a zero-shot LLM.</div>
+    </div>
+  </div>
+
+  <div class="rv" style="margin-bottom:52px;">
+    <div style="font-family:var(--head);font-weight:600;font-size:16px;margin-bottom:18px;letter-spacing:-.3px;">What's planned</div>
+    <div class="fgrid">
+      <div class="fc"><div class="fn">immediate</div><div class="ftitle">Activate GP scorer</div><div class="fbody">Review 10 leads in the dashboard to unlock the self-learning layer. Highest ROI action available right now.</div></div>
+      <div class="fc"><div class="fn">short-term</div><div class="ftitle">Try Gemini free tier</div><div class="fbody">Gemini Pro at 1M tokens/day free. Test on edge cases where Nemotron currently makes mistakes.</div></div>
+      <div class="fc"><div class="fn">short-term</div><div class="ftitle">Email outreach live</div><div class="fbody">SMTP pipeline is built and tested. Connect credentials. Leads with found emails get an automated first contact.</div></div>
+      <div class="fc"><div class="fn">medium-term</div><div class="ftitle">Facebook groups</div><div class="fbody">Entrepreneur and founder groups. Different audience than LinkedIn — stronger for regional B2B intent in India.</div></div>
+      <div class="fc"><div class="fn">medium-term</div><div class="ftitle">LinkedIn Sales Nav API</div><div class="fbody">Replaces Playwright entirely. Cloud-deployable, faster, no session management. Unlocks full autonomy.</div></div>
+      <div class="fc"><div class="fn">medium-term</div><div class="ftitle">CRM push</div><div class="fbody">Direct HubSpot or Zoho sync. Leads arrive in CRM automatically — no dashboard visits needed.</div></div>
+    </div>
+  </div>
+
+  <div class="outro rv">
+    <div class="ot">The hard part wasn't the code.</div>
+    <div class="os">It was figuring out that keyword search was the wrong mental model entirely. Everything else followed from that one insight.</div>
+    <div class="pillrow">
+      <span class="pill" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);color:var(--blue);">FastAPI · async</span>
+      <span class="pill" style="background:rgba(124,92,252,.1);border:1px solid rgba(124,92,252,.2);color:var(--vio);">Nemotron-49B</span>
+      <span class="pill" style="background:rgba(0,201,122,.1);border:1px solid rgba(0,201,122,.2);color:var(--grn);">GP scorer</span>
+      <span class="pill" style="background:rgba(232,160,32,.1);border:1px solid rgba(232,160,32,.2);color:var(--amb);">Supabase</span>
+      <span class="pill" style="background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);color:var(--blue);">Playwright</span>
+      <span class="pill" style="background:rgba(124,92,252,.1);border:1px solid rgba(124,92,252,.2);color:var(--vio);">SSE streaming</span>
+    </div>
+  </div>
+
+</div></div>
+</section>
+
+<footer>
+  <div class="w">
+    <div style="font-family:var(--head);font-size:14px;font-weight:600;margin-bottom:5px;">demaze <strong>lead engine</strong></div>
+    <div>Aarav Singh · Demaze Technologies, Ahmedabad · July 2026</div>
+  </div>
+</footer>
+
+<script>
+// ── canvas stars ──────────────────────────────────────────────────────────────
+(function(){
+  const cvs = document.getElementById('cvs');
+  const ctx = cvs.getContext('2d');
+  const stars = [];
+  function resize(){ cvs.width = window.innerWidth; cvs.height = window.innerHeight; }
+  window.addEventListener('resize', resize); resize();
+  for(let i=0;i<160;i++){
+    stars.push({
+      x: Math.random(),
+      y: Math.random(),
+      r: Math.random()*1.2+0.2,
+      a: Math.random(),
+      da: (Math.random()*0.004+0.001) * (Math.random()<.5?1:-1),
+      t: Math.random()*Math.PI*2
+    });
+  }
+  function frame(){
+    ctx.clearRect(0,0,cvs.width,cvs.height);
+    stars.forEach(s=>{
+      s.t += s.da;
+      s.a = 0.08 + 0.22*Math.abs(Math.sin(s.t));
+      ctx.beginPath();
+      ctx.arc(s.x*cvs.width, s.y*cvs.height, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255,255,255,${s.a.toFixed(3)})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+// ── terminal animation ────────────────────────────────────────────────────────
+// FIX: property is 't' not 'text'
+const LINES = [
+  {t:'$ python main.py',                                   c:'cm', d:400},
+  {t:'  demaze-v2 starting → http://localhost:3000',       c:'cb', d:500},
+  {t:'  GP scorer: warming up (0 labels)',                 c:'cm', d:200},
+  {t:'',                                                   c:'cm', d:360},
+  {t:'▶ pipeline run — reddit + twitter + linkedin_hot',   c:'cb', d:200},
+  {t:'  [1/7] scraping Reddit...',                         c:'cm', d:120},
+  {t:'  [1/7] scraping Twitter...',                        c:'cm', d:120},
+  {t:'  ✓ Reddit: 48 posts',                               c:'cg', d:820},
+  {t:'  ✓ Twitter: 31 posts',                              c:'cg', d:160},
+  {t:'  [2/7] LinkedIn browser starting...',               c:'cy', d:200},
+  {t:'    scrolling feed [2 / 5]',                         c:'cm', d:900},
+  {t:'    scrolling feed [4 / 5]',                         c:'cm', d:800},
+  {t:'    scrolling feed [5 / 5] — done',                  c:'cm', d:700},
+  {t:'  ✓ LinkedIn hot: 127 posts',                        c:'cg', d:300},
+  {t:'',                                                   c:'cm', d:200},
+  {t:'  [3/7] dedup: 206 unique posts remaining',          c:'cb', d:180},
+  {t:'  [4/7] hard-reject: 89 filtered (jobs/agencies)',   c:'cm', d:220},
+  {t:'  [5/7] scoring 60 posts — 12 batches of 5',         c:'cv', d:200},
+  {t:'    batch  1/12 →  5 scored | ETA ~42s',             c:'cm', d:480},
+  {t:'    batch  4/12 → 20 scored | ETA ~30s',             c:'cm', d:550},
+  {t:'    batch  8/12 → 40 scored | ETA ~16s',             c:'cm', d:550},
+  {t:'    batch 12/12 → 60 scored | ETA done',             c:'cm', d:500},
+  {t:'',                                                   c:'cm', d:100},
+  {t:'  ✓ qualified: 6 / 60  (avg score 9.0)',             c:'cg', d:120},
+  {t:'  [10] Raj Perwani      — "Odoo POS + inventory..."',c:'cg', d:100},
+  {t:'  [10] Md Sarwar Alam   — "web + app dev partner"',  c:'cg', d:100},
+  {t:'  [ 8] Madhulika Joshi  — "consumer-tech platform"', c:'cg', d:100},
+  {t:'',                                                   c:'cm', d:180},
+  {t:'  [6/7] saving 6 leads to Supabase...',              c:'cb', d:200},
+  {t:'  ✓ saved 6  |  duplicates skipped: 0',              c:'cg', d:380},
+  {t:'',                                                   c:'cm', d:100},
+  {t:'pipeline complete in 52s  —  6 new leads',           c:'cg', d:100},
+];
+
+const tb = document.getElementById('tb');
+let li = 0, ci = 0, curEl = null;
+
+function nextLine() {
+  if (li >= LINES.length) {
+    setTimeout(function() {
+      tb.innerHTML = '';
+      li = 0; ci = 0; curEl = null;
+      nextLine();
+    }, 4200);
+    return;
+  }
+  const row = LINES[li];
+  curEl = document.createElement('div');
+  curEl.className = 'tl ' + row.c;
+  tb.appendChild(curEl);
+  setTimeout(function() { typeChar(row.t); }, row.d);
+}
+
+function typeChar(txt) {
+  if (ci <= txt.length) {
+    curEl.textContent = txt.slice(0, ci);
+    ci++;
+    var delay = ci < 3 ? 90 : (txt.length > 40 ? 13 : 18);
+    setTimeout(function() { typeChar(txt); }, delay);
+  } else {
+    ci = 0;
+    li++;
+    tb.scrollTop = tb.scrollHeight;
+    setTimeout(nextLine, 45);
+  }
+}
+
+setTimeout(nextLine, 900);
+
+// ── scroll reveal ─────────────────────────────────────────────────────────────
+var revObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) { e.target.classList.add('on'); revObs.unobserve(e.target); }
+  });
+}, { threshold: 0.07 });
+document.querySelectorAll('.rv, .jst').forEach(function(el) { revObs.observe(el); });
+
+// ── counters ──────────────────────────────────────────────────────────────────
+var ctObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (!e.isIntersecting) return;
+    var el = e.target;
+    var to = parseInt(el.dataset.to);
+    var sfx = el.dataset.sfx || '';
+    var v = 0;
+    var step = Math.max(1, Math.ceil(to / 36));
+    var timer = setInterval(function() {
+      v = Math.min(v + step, to);
+      el.textContent = v + sfx;
+      if (v >= to) clearInterval(timer);
+    }, 28);
+    ctObs.unobserve(el);
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('[data-to]').forEach(function(el) { ctObs.observe(el); });
+
+// ── section dots ──────────────────────────────────────────────────────────────
+var sectIds = ['hero','problem','journey','howitworks','ai','results','next'];
+var dots = document.querySelectorAll('.sd');
+var dotObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      var i = sectIds.indexOf(e.target.id);
+      if (i >= 0) dots.forEach(function(d, j) { d.classList.toggle('on', j === i); });
+    }
+  });
+}, { threshold: 0.4 });
+sectIds.forEach(function(id) { var el = document.getElementById(id); if (el) dotObs.observe(el); });
+
+function gs(id) { var el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+
+// ── 3D tilt on cards ─────────────────────────────────────────────────────────
+document.querySelectorAll('.card, .lcard').forEach(function(card) {
+  card.addEventListener('mousemove', function(e) {
+    var r = card.getBoundingClientRect();
+    var x = (e.clientX - r.left) / r.width  - 0.5;
+    var y = (e.clientY - r.top)  / r.height - 0.5;
+    card.style.transform = 'perspective(500px) rotateY(' + (x*7) + 'deg) rotateX(' + (-y*7) + 'deg) translateY(-3px)';
+  });
+  card.addEventListener('mouseleave', function() { card.style.transform = ''; });
+});
+</script>
+</body>
+</html>
